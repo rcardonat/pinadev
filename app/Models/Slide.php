@@ -12,6 +12,21 @@ namespace App\Models;
  */
 final class Slide
 {
+    /**
+     * Efecto de transición del slider. Valores permitidos:
+     *   'slide' (deslizar), 'fade' (desvanecer), 'zoom', 'cube' (cubo 3D),
+     *   'flip' (voltear) o 'random' (uno distinto al azar en cada cambio).
+     */
+    public const EFFECT = 'cube';
+
+    private const EFFECTS = ['slide', 'fade', 'zoom', 'cube', 'flip', 'random'];
+
+    /** Efecto validado contra la lista permitida (por defecto, 'slide'). */
+    public static function effect(): string
+    {
+        return in_array(self::EFFECT, self::EFFECTS, true) ? self::EFFECT : 'slide';
+    }
+
     /** @return list<array{title: string, text: string, cta: string, link: string, theme: int}> */
     public static function all(): array
     {

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace App\Controllers;
+use App\Models\Company;
 use Base;
 use View;
 /**
@@ -58,6 +59,7 @@ abstract class Controller
         $data['menu']     = $this->menu();
         $data['year']     = date('Y');
         $data['theme']    = $this->theme();
+        $data['social']   = Company::social();   // pie de página (todas las páginas)
         $data['view']     = 'pages/' . $page . '.php';
         $file = $layout === '' ? $data['view'] : 'layouts/' . $layout . '.php';
         echo View::instance()->render($file, 'text/html', $data);

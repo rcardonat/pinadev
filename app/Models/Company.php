@@ -51,6 +51,24 @@ final class Company
     }
 
     /**
+     * Redes sociales del pie de página.
+     * 'icon' = id en el sprite (archivo youtube.svg, instagram.svg…); si aún no
+     * existe, el botón muestra la inicial. 'class' = color de marca en app.css.
+     *
+     * @return list<array{name: string, icon: string, url: string, class: string}>
+     */
+    public static function social(): array
+    {
+        return [
+            ['name' => 'Instagram', 'icon' => 'insta',        'url' => 'https://www.instagram.com/ejemplo',            'class' => 'is-instagram'],
+            ['name' => 'Facebook',  'icon' => 'facebook',     'url' => 'https://www.facebook.com/ejemplo',             'class' => 'is-facebook'],
+            ['name' => 'YouTube',   'icon' => 'youtube-fill', 'url' => 'https://www.youtube.com/@ejemplo',             'class' => 'is-youtube'],
+            ['name' => 'Steam',     'icon' => 'steam',        'url' => 'https://store.steampowered.com/developer/ejemplo', 'class' => 'is-steam'],
+            ['name' => 'itch.io',   'icon' => 'shop',         'url' => 'https://ejemplo.itch.io',                      'class' => 'is-itchio'],
+        ];
+    }
+
+    /**
      * Estado de atención en este momento (zona horaria de la app, ver config).
      *
      * @return array{open: bool, status: string, detail: string,

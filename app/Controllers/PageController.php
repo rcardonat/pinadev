@@ -23,6 +23,7 @@ final class PageController extends Controller
             'title'        => 'Inicio',
             'description'  => 'Bienvenido a PinaDev.',
             'slides'       => $slides,
+            'slider_effect' => Slide::effect(),
             'featured'     => array_slice(Product::all(), 0, 3),
             'company'      => Company::info(),
             'availability' => Company::availability(),

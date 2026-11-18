@@ -711,8 +711,29 @@ html:has(.drawer:target) { overflow: hidden; }
     overflow: hidden;
     background-color: var(--slide-bg);
     background-size: 200% 200%;
+    backface-visibility: hidden;
+}
+/* Las diapositivas llevan role="group" (accesibilidad del carrusel) y Pico
+   estiliza [role=group] como grupo de botones: margen inferior de 18 px,
+   sombra al enfocar un botón interno, etc. Se neutraliza aquí. */
+.slider .slide[role="group"] {
+    margin: 0;
+    width: auto;
+    border-radius: 0;
+    box-shadow: none;
+    vertical-align: top;
+    --pico-group-box-shadow: none;
+}
+/* El fondo que se mueve va en una capa aparte, para que su animación no
+   choque con las animaciones de transición de la diapositiva. */
+.slide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit;
     animation: bg-drift 18s ease-in-out infinite alternate;
 }
+.slide-content { position: relative; }
 .slide--1 { background-image: radial-gradient(ellipse at 20% 20%, rgb(var(--accent-rgb) / .35), transparent 55%), radial-gradient(ellipse at 80% 90%, var(--blob-a), transparent 60%); }
 .slide--2 { background-image: radial-gradient(ellipse at 80% 15%, rgb(var(--accent-rgb) / .30), transparent 55%), radial-gradient(ellipse at 15% 85%, var(--blob-b), transparent 60%); }
 .slide--3 { background-image: radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / .30), transparent 60%), radial-gradient(ellipse at 90% 80%, var(--blob-c), transparent 55%); }
@@ -725,6 +746,90 @@ html:has(.drawer:target) { overflow: hidden; }
 /* Entrada del texto de la diapositiva activa (clase puesta por app.js). */
 .slider.is-ready .slide .slide-content { opacity: .35; transform: translateY(12px); transition: opacity var(--dur) ease, transform .6s var(--ease-out); }
 .slider.is-ready .slide.is-active .slide-content { opacity: 1; transform: none; }
+.slider.is-enhanced .slide.fx-in .slide-content { transition-delay: calc(var(--slide-dur) * .45); }
+
+/* ---- Modo con JS: diapositivas apiladas + efectos de transición ----
+   app.js pone en .slider: data-fx (efecto) y data-dir (next | prev),
+   y en las diapositivas: .fx-in (entra) y .fx-out (sale). */
+.slider { --slide-dur: .8s; --slide-ease: cubic-bezier(.65, 0, .35, 1); }
+
+.slider.is-enhanced .slider-track {
+    display: grid;
+    overflow: hidden;
+    scroll-snap-type: none;
+    touch-action: pan-y;         /* el gesto horizontal lo gestiona app.js */
+    perspective: 1600px;
+    user-select: none;
+    cursor: grab;                /* indica que se puede arrastrar */
+}
+.slider.is-enhanced .slider-track.is-dragging { cursor: grabbing; }
+.slider.is-enhanced .slider-track a,
+.slider.is-enhanced .slider-track button { cursor: pointer; }
+.slider.is-enhanced .slide {
+    grid-area: 1 / 1;            /* todas en la misma celda */
+    visibility: hidden;
+}
+.slider.is-enhanced .slide.is-active,
+.slider.is-enhanced .slide.fx-out { visibility: visible; }
+.slider.is-enhanced .slide.fx-in  { z-index: 2; }
+.slider.is-enhanced .slide.fx-out { z-index: 1; }
+
+.slider .fx-in, .slider .fx-out {
+    animation-duration: var(--slide-dur);
+    animation-timing-function: var(--slide-ease);
+    animation-fill-mode: both;
+}
+
+/* Deslizar */
+.slider[data-fx="slide"][data-dir="next"] .fx-in  { animation-name: fx-slide-in-next; }
+.slider[data-fx="slide"][data-dir="next"] .fx-out { animation-name: fx-slide-out-next; }
+.slider[data-fx="slide"][data-dir="prev"] .fx-in  { animation-name: fx-slide-in-prev; }
+.slider[data-fx="slide"][data-dir="prev"] .fx-out { animation-name: fx-slide-out-prev; }
+
+/* Desvanecer */
+.slider[data-fx="fade"] .fx-in  { animation-name: fx-fade-in; }
+.slider[data-fx="fade"] .fx-out { animation-name: fx-fade-out; }
+
+/* Zoom */
+.slider[data-fx="zoom"] .fx-in  { animation-name: fx-zoom-in; }
+.slider[data-fx="zoom"] .fx-out { animation-name: fx-zoom-out; }
+
+/* Cubo 3D: cada cara gira sobre la arista que comparte con la otra. */
+.slider[data-fx="cube"][data-dir="next"] .fx-in  { animation-name: fx-cube-in-next;  transform-origin: 0% 50%; }
+.slider[data-fx="cube"][data-dir="next"] .fx-out { animation-name: fx-cube-out-next; transform-origin: 100% 50%; }
+.slider[data-fx="cube"][data-dir="prev"] .fx-in  { animation-name: fx-cube-in-prev;  transform-origin: 100% 50%; }
+.slider[data-fx="cube"][data-dir="prev"] .fx-out { animation-name: fx-cube-out-prev; transform-origin: 0% 50%; }
+
+/* Voltear: la saliente gira hasta quedar de canto y luego entra la nueva. */
+.slider[data-fx="flip"] .fx-in,
+.slider[data-fx="flip"] .fx-out { animation-duration: calc(var(--slide-dur) / 2); }
+.slider[data-fx="flip"] .fx-out { animation-timing-function: ease-in; }
+.slider[data-fx="flip"] .fx-in  { animation-timing-function: ease-out; animation-delay: calc(var(--slide-dur) / 2); }
+.slider[data-fx="flip"][data-dir="next"] .fx-in  { animation-name: fx-flip-in-next; }
+.slider[data-fx="flip"][data-dir="next"] .fx-out { animation-name: fx-flip-out-next; }
+.slider[data-fx="flip"][data-dir="prev"] .fx-in  { animation-name: fx-flip-in-prev; }
+.slider[data-fx="flip"][data-dir="prev"] .fx-out { animation-name: fx-flip-out-prev; }
+
+@keyframes fx-slide-in-next  { from { transform: translateX(100%); } }
+@keyframes fx-slide-out-next { to   { transform: translateX(-100%); } }
+@keyframes fx-slide-in-prev  { from { transform: translateX(-100%); } }
+@keyframes fx-slide-out-prev { to   { transform: translateX(100%); } }
+
+@keyframes fx-fade-in  { from { opacity: 0; } }
+@keyframes fx-fade-out { to   { opacity: 0; } }
+
+@keyframes fx-zoom-in  { from { opacity: 0; transform: scale(1.15); } }
+@keyframes fx-zoom-out { to   { opacity: 0; transform: scale(.9); } }
+
+@keyframes fx-cube-in-next  { from { transform: translateX(100%) rotateY(90deg);  filter: brightness(.5); } }
+@keyframes fx-cube-out-next { to   { transform: translateX(-100%) rotateY(-90deg); filter: brightness(.5); } }
+@keyframes fx-cube-in-prev  { from { transform: translateX(-100%) rotateY(-90deg); filter: brightness(.5); } }
+@keyframes fx-cube-out-prev { to   { transform: translateX(100%) rotateY(90deg);  filter: brightness(.5); } }
+
+@keyframes fx-flip-out-next { to   { transform: rotateY(-90deg); filter: brightness(.6); } }
+@keyframes fx-flip-in-next  { from { transform: rotateY(90deg);  filter: brightness(.6); } }
+@keyframes fx-flip-out-prev { to   { transform: rotateY(90deg);  filter: brightness(.6); } }
+@keyframes fx-flip-in-prev  { from { transform: rotateY(-90deg); filter: brightness(.6); } }
 
 .slider-controls {
     position: absolute;
@@ -775,8 +880,106 @@ html:has(.drawer:target) { overflow: hidden; }
    ========================================================================= */
 .site-footer {
     border-top: 1px solid var(--pico-muted-border-color);
-    padding-block: 1.25rem;
     color: var(--pico-muted-color);
+    background: var(--header-bg);
+}
+.footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding-block: 1.75rem;
+}
+.footer-brand { display: flex; flex-direction: column; gap: .2rem; }
+.footer-brand strong { color: var(--fg); font-size: 1.1rem; }
+.footer-bottom {
+    padding-block: 1rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+/* ---- Redes sociales: botón redondo que se "infla" como burbuja ----
+   Al pasar el ratón (o enfocar con teclado) se ensancha mostrando el nombre,
+   toma el color de la marca y hace un rebote elástico. */
+.social { display: block; }
+.social ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 0;
+    padding: 0;
+}
+.social li { display: block; margin: 0; padding: 0; list-style: none; }
+
+.social a.social-link {
+    --brand: var(--pico-primary);
+    --brand-glow: var(--accent-glow);
+    display: inline-flex;
+    align-items: center;
+    height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--pico-muted-border-color);
+    background: var(--surface);
+    color: var(--fg);
+    text-decoration: none;
+    overflow: hidden;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease,
+                border-color var(--dur-fast) ease, box-shadow var(--dur) var(--ease-out),
+                transform var(--dur) cubic-bezier(.34, 1.56, .64, 1);
+}
+.social-icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 100%;
+    flex-shrink: 0;
+    font-weight: 700;            /* inicial de respaldo si falta el icono */
+}
+.social-icon .icon { width: 1.3rem; height: 1.3rem; vertical-align: 0; }
+.social-label {
+    max-width: 0;
+    opacity: 0;
+    padding-right: 0;
+    white-space: nowrap;
+    font-size: .95rem;
+    font-weight: 600;
+    transition: max-width .5s cubic-bezier(.34, 1.56, .64, 1),
+                padding-right .5s cubic-bezier(.34, 1.56, .64, 1),
+                opacity var(--dur-fast) ease;
+}
+
+.social a.is-youtube   { --brand: #CC0000; --brand-glow: rgb(204 0 0 / .45); }
+.social a.is-facebook  { --brand: #1565D8; --brand-glow: rgb(21 101 216 / .45); }
+.social a.is-instagram { --brand: linear-gradient(45deg, #D6249F, #9A2FB8 55%, #4F5BD5); --brand-glow: rgb(193 53 132 / .45); }
+.social a.is-steam     { --brand: linear-gradient(135deg, #1B2838, #2A475E); --brand-glow: rgb(102 192 244 / .45); }
+.social a.is-itchio    { --brand: #D23C3C; --brand-glow: rgb(250 92 92 / .45); }
+
+/* Expansión solo en dispositivos con ratón (en táctil quedan como círculos). */
+@media (hover: hover) {
+    .social a.social-link:hover .social-label { max-width: 8rem; opacity: 1; padding-right: 1rem; }
+}
+.social a.social-link:focus-visible .social-label { max-width: 8rem; opacity: 1; padding-right: 1rem; }
+
+.social a.social-link:hover,
+.social a.social-link:focus-visible {
+    background: var(--brand);
+    border-color: transparent;
+    color: #FFFFFF;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px -6px var(--brand-glow);
+}
+.social a.is-steam:hover,
+.social a.is-steam:focus-visible {
+    box-shadow: 0 0 0 1px #66C0F4, 0 10px 24px -6px var(--brand-glow);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .social a.social-link:hover { animation: bubble .6s cubic-bezier(.34, 1.56, .64, 1); }
+}
+
+@media (max-width: 575px) {
+    .footer-inner { flex-direction: column; align-items: flex-start; }
 }
 
 /* =========================================================================
@@ -786,6 +989,13 @@ html:has(.drawer:target) { overflow: hidden; }
 /* Usa "translate" (no "transform") para no chocar con el efecto hover de las cards. */
 @keyframes pulse-ring { from { transform: scale(1); opacity: .7; } to { transform: scale(2.6); opacity: 0; } }
 @keyframes nudge-up { 40% { transform: translateY(-4px); } }
+@keyframes bubble {
+    0%   { transform: translateY(0) scale(1, 1); }
+    35%  { transform: translateY(-3px) scale(1.12, .9); }
+    60%  { transform: translateY(-3px) scale(.96, 1.06); }
+    80%  { transform: translateY(-3px) scale(1.03, .98); }
+    100% { transform: translateY(-3px) scale(1, 1); }
+}
 @keyframes rise-in   { from { opacity: 0; translate: 0 24px; } }
 @keyframes page-out  { to   { opacity: 0; transform: translateY(-8px); } }
 @keyframes page-in   { from { opacity: 0; transform: translateY(12px); } }
@@ -823,4 +1033,6 @@ html:has(.drawer:target) { overflow: hidden; }
         scroll-behavior: auto !important;
     }
     .slider-track { scroll-behavior: auto; }
+    /* Cambio de diapositiva instantáneo (incluye el retardo del efecto flip). */
+    .slider .fx-in, .slider .fx-out { animation: none !important; }
 }

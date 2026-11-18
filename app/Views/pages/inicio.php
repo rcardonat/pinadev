@@ -17,7 +17,7 @@ $total = count($slides);
   Slider: sin JavaScript es un carrusel deslizable (scroll-snap).
   app.js muestra los controles, añade autoplay con pausa y sincroniza los puntos.
 -->
-<section class="slider" data-slider aria-roledescription="carrusel" aria-label="Destacados">
+<section class="slider" data-slider data-effect="<?= $slider_effect ?>" aria-roledescription="carrusel" aria-label="Destacados">
     <div class="slider-track" data-slider-track tabindex="0" aria-live="polite">
         <?php foreach ($slides as $i => $slide): ?>
         <div class="slide slide--<?= (int) $slide['theme'] ?>" role="group"

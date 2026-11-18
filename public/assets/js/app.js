@@ -397,38 +397,42 @@
     }
 
     /* ---------------------------------------------------------------------
-       Slider accesible.
+       Slider accesible con efectos de transición.
        Sin JS: carrusel deslizable con scroll-snap.
-       Con JS: flechas, puntos, autoplay con botón de pausa (WCAG 2.2.2),
-       pausa al pasar el ratón o enfocar, y sin autoplay si se prefiere
-       reducir el movimiento.
+       Con JS (.is-enhanced): diapositivas apiladas que cambian con el efecto
+       de data-effect: slide | fade | zoom | cube | flip | random.
+       Flechas, puntos, teclado, gesto de deslizar, autoplay con botón de
+       pausa (WCAG 2.2.2), pausa al pasar el ratón o enfocar. Con "reducir
+       movimiento": sin autoplay y cambios instantáneos.
        --------------------------------------------------------------------- */
     const INTERVAL = 6000;
+    const EFFECTS = ['slide', 'fade', 'zoom', 'cube', 'flip'];
 
-    document.querySelectorAll('[data-slider]').forEach((root) => {
-        const track = root.querySelector('[data-slider-track]');
-        const controls = root.querySelector('[data-slider-controls]');
+    document.querySelectorAll('[data-slider]').forEach((slider) => {
+        const track = slider.querySelector('[data-slider-track]');
+        const controls = slider.querySelector('[data-slider-controls]');
         const slides = track ? Array.from(track.children) : [];
         if (!controls || slides.length < 2) return;
 
-        const prevBtn = root.querySelector('[data-slider-prev]');
-        const nextBtn = root.querySelector('[data-slider-next]');
-        const pauseBtn = root.querySelector('[data-slider-pause]');
-        const dots = Array.from(root.querySelectorAll('[data-slider-dot]'));
+        const prevBtn = slider.querySelector('[data-slider-prev]');
+        const nextBtn = slider.querySelector('[data-slider-next]');
+        const pauseBtn = slider.querySelector('[data-slider-pause]');
+        const dots = Array.from(slider.querySelectorAll('[data-slider-dot]'));
+        const baseEffect = EFFECTS.includes(slider.dataset.effect) || slider.dataset.effect === 'random'
+            ? slider.dataset.effect : 'slide';
 
         let index = 0;
         let playing = !reduceMotion.matches;
         let hovered = false;
         let focused = false;
         let timer = null;
-        let scrollTimer = null;
+        let cleanup = null;     // termina la transición en curso
 
         controls.hidden = false;
-        root.classList.add('is-ready');
+        slider.classList.add('is-ready', 'is-enhanced');
+        track.scrollLeft = 0;
 
-        const behavior = () => (reduceMotion.matches ? 'auto' : 'smooth');
-
-        function update(i) {
+        function mark(i) {
             index = i;
             slides.forEach((slide, n) => {
                 const active = n === index;
@@ -439,11 +443,42 @@
             dots.forEach((dot, n) => dot.setAttribute('aria-current', n === index ? 'true' : 'false'));
         }
 
-        function goTo(i) {
+        function goTo(i, dir) {
             const target = (i + slides.length) % slides.length;
-            track.scrollTo({ left: target * track.clientWidth, behavior: behavior() });
-            update(target);
+            if (target === index) return;
+            if (cleanup) cleanup();             // clic rápido: cierra la anterior
+
+            const from = slides[index];
+            const to = slides[target];
+            const effect = baseEffect === 'random'
+                ? EFFECTS[Math.floor(Math.random() * EFFECTS.length)]
+                : baseEffect;
+
+            slider.dataset.fx = effect;
+            slider.dataset.dir = dir || (target > index ? 'next' : 'prev');
+            from.classList.add('fx-out');
+            to.classList.add('fx-in');
+            mark(target);
+
+            let done = false;
+            cleanup = () => {
+                if (done) return;
+                done = true;
+                from.classList.remove('fx-out');
+                to.classList.remove('fx-in');
+                cleanup = null;
+            };
+            // Fin de la animación de entrada (o respaldo si no hay animación).
+            to.addEventListener('animationend', function onEnd(e) {
+                if (e.target !== to) return;
+                to.removeEventListener('animationend', onEnd);
+                cleanup && cleanup();
+            });
+            setTimeout(() => cleanup && cleanup(), reduceMotion.matches ? 0 : 1400);
         }
+
+        const next = () => goTo(index + 1, 'next');
+        const prev = () => goTo(index - 1, 'prev');
 
         function setPlaying(value) {
             playing = value;
@@ -458,12 +493,12 @@
             clearInterval(timer);
             if (!playing) return;
             timer = setInterval(() => {
-                if (!hovered && !focused && !document.hidden) goTo(index + 1);
+                if (!hovered && !focused && !document.hidden) next();
             }, INTERVAL);
         }
 
-        prevBtn.addEventListener('click', () => { goTo(index - 1); restart(); });
-        nextBtn.addEventListener('click', () => { goTo(index + 1); restart(); });
+        prevBtn.addEventListener('click', () => { prev(); restart(); });
+        nextBtn.addEventListener('click', () => { next(); restart(); });
         pauseBtn.addEventListener('click', () => setPlaying(!playing));
         dots.forEach((dot) => dot.addEventListener('click', () => {
             goTo(Number(dot.dataset.sliderDot));
@@ -474,36 +509,51 @@
         track.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                 e.preventDefault();
-                goTo(index + (e.key === 'ArrowRight' ? 1 : -1));
+                (e.key === 'ArrowRight' ? next : prev)();
                 restart();
             }
         });
 
-        // Deslizamiento táctil / rueda: sincroniza el índice al terminar.
-        track.addEventListener('scroll', () => {
-            clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                const i = Math.round(track.scrollLeft / track.clientWidth);
-                if (i !== index) update(i);
-            }, 120);
-        }, { passive: true });
-
-        root.addEventListener('mouseenter', () => { hovered = true; });
-        root.addEventListener('mouseleave', () => { hovered = false; });
-        root.addEventListener('focusin', () => { focused = true; });
-        root.addEventListener('focusout', (e) => {
-            if (!root.contains(e.relatedTarget)) focused = false;
+        // Gesto de deslizar (táctil y ratón): umbral de 45 px en horizontal.
+        let startX = null;
+        let startY = 0;
+        track.addEventListener('pointerdown', (e) => {
+            startX = e.clientX;
+            startY = e.clientY;
+            // Mano cerrada mientras se arrastra con el ratón.
+            if (e.pointerType === 'mouse' && !e.target.closest('a, button')) {
+                track.classList.add('is-dragging');
+            }
         });
+        const stopDrag = () => track.classList.remove('is-dragging');
+        track.addEventListener('pointerleave', stopDrag);
+        window.addEventListener('pointerup', stopDrag);
+        track.addEventListener('pointerup', (e) => {
+            if (startX === null) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            startX = null;
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+                (dx < 0 ? next : prev)();
+                restart();
+            }
+        });
+        track.addEventListener('pointercancel', () => { startX = null; stopDrag(); });
+        // Evita que el navegador arrastre la imagen/enlace en lugar del slider.
+        track.addEventListener('dragstart', (e) => e.preventDefault());
 
-        window.addEventListener('resize', () => {
-            track.scrollTo({ left: index * track.clientWidth, behavior: 'auto' });
+        slider.addEventListener('mouseenter', () => { hovered = true; });
+        slider.addEventListener('mouseleave', () => { hovered = false; });
+        slider.addEventListener('focusin', () => { focused = true; });
+        slider.addEventListener('focusout', (e) => {
+            if (!slider.contains(e.relatedTarget)) focused = false;
         });
 
         reduceMotion.addEventListener('change', () => {
             if (reduceMotion.matches) setPlaying(false);
         });
 
-        update(0);
+        mark(0);
         setPlaying(playing);
     });
 })();

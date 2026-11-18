@@ -24,7 +24,7 @@
     <meta name="description" content="<?= $description ?>">
     <?php endif ?>
     <link rel="stylesheet" href="<?= $base ?>/assets/css/pico.min.css?v=2.0.6">
-    <link rel="stylesheet" href="<?= $base ?>/assets/css/app.css?v=9">
+    <link rel="stylesheet" href="<?= $base ?>/assets/css/app.css?v=15">
     <?php foreach ($styles as $href): ?>
     <link rel="stylesheet" href="<?= $base ?>/assets/<?= $href ?>">
     <?php endforeach ?>
@@ -49,7 +49,7 @@
         <?= icon('transfer-top') ?>
     </button>
 
-    <script src="<?= $base ?>/assets/js/app.js?v=9" defer></script>
+    <script src="<?= $base ?>/assets/js/app.js?v=11" defer></script>
     <?php foreach ($scripts as $src): ?>
     <script src="<?= $base ?>/assets/<?= $src ?>" defer></script>
     <?php endforeach ?>
