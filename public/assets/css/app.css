@@ -1,0 +1,826 @@
+/* Ajustes propios sobre Pico CSS 2.0.6 — temas oscuro/claro, layout y animaciones. */
+
+/* =========================================================================
+   1. Temas
+   Oscuro = predeterminado (reporte §5.1). Claro = solo si el usuario lo elige.
+   :root[data-theme=…] gana a [data-theme=…] de Pico por especificidad.
+   ========================================================================= */
+:root {
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
+    --dur-fast: .2s;
+    --dur: .45s;
+}
+
+:root[data-theme="dark"] {
+    --pico-background-color: #101419;
+    --pico-color: #EDF2F7;
+    --pico-h1-color: #EDF2F7;
+    --pico-h2-color: #EDF2F7;
+    --pico-h3-color: #EDF2F7;
+    --pico-muted-color: #AAB6C5;
+    --pico-muted-border-color: #34404D;
+
+    --pico-primary: #45B6A8;
+    --pico-primary-background: #45B6A8;
+    --pico-primary-border: #45B6A8;
+    --pico-primary-underline: rgba(69, 182, 168, .5);
+    --pico-primary-hover: #6CCABE;
+    --pico-primary-hover-background: #6CCABE;
+    --pico-primary-hover-border: #6CCABE;
+    --pico-primary-hover-underline: #6CCABE;
+    --pico-primary-focus: rgba(69, 182, 168, .45);
+    --pico-primary-inverse: #101419;
+
+    --pico-card-background-color: #1B222B;
+    --pico-card-sectioning-background-color: #1F2731;
+    --pico-dropdown-background-color: #1B222B;
+    --pico-dropdown-hover-background-color: #26303B;
+    --pico-form-element-background-color: #1B222B;
+    --pico-form-element-border-color: #34404D;
+    --pico-del-color: #F08080;
+    color-scheme: dark;
+
+    --accent-rgb: 69 182 168;
+    --surface: #1B222B;
+    /* Color de texto propio: Pico redefine --pico-color dentro de los botones
+       (= --pico-primary-inverse), así que los botones transparentes usan --fg. */
+    --fg: #EDF2F7;
+    --header-bg: rgb(27 34 43 / .82);
+    --slide-bg: #141A21;
+    --blob-a: rgb(52 64 77 / .9);
+    --blob-b: rgb(69 120 182 / .30);
+    --blob-c: rgb(140 110 190 / .25);
+    --controls-bg: rgb(16 20 25 / .7);
+    --dot: #5C6B7A;
+    --dot-hover: #AAB6C5;
+    --accent-glow: rgb(var(--accent-rgb) / .28);
+}
+
+:root[data-theme="light"] {
+    --pico-background-color: #F5F7FA;
+    --pico-color: #1A2330;
+    --pico-h1-color: #1A2330;
+    --pico-h2-color: #1A2330;
+    --pico-h3-color: #1A2330;
+    --pico-muted-color: #4A5868;
+    --pico-muted-border-color: #D5DCE4;
+
+    /* Acento oscurecido para cumplir WCAG AA sobre fondo claro (≈ 4.8:1). */
+    --pico-primary: #1F7A70;
+    --pico-primary-background: #1F7A70;
+    --pico-primary-border: #1F7A70;
+    --pico-primary-underline: rgba(31, 122, 112, .5);
+    --pico-primary-hover: #17635B;
+    --pico-primary-hover-background: #17635B;
+    --pico-primary-hover-border: #17635B;
+    --pico-primary-hover-underline: #17635B;
+    --pico-primary-focus: rgba(31, 122, 112, .35);
+    --pico-primary-inverse: #FFFFFF;
+
+    --pico-card-background-color: #FFFFFF;
+    --pico-card-sectioning-background-color: #F0F3F7;
+    --pico-dropdown-background-color: #FFFFFF;
+    --pico-dropdown-hover-background-color: #EEF2F6;
+    --pico-form-element-background-color: #FFFFFF;
+    --pico-form-element-border-color: #C3CCD6;
+    --pico-del-color: #B42318;
+    color-scheme: light;
+
+    --accent-rgb: 31 122 112;
+    --surface: #FFFFFF;
+    --fg: #1A2330;
+    --header-bg: rgb(255 255 255 / .82);
+    --slide-bg: #E9F1F2;
+    --blob-a: rgb(255 255 255 / .9);
+    --blob-b: rgb(120 160 210 / .30);
+    --blob-c: rgb(170 140 210 / .25);
+    --controls-bg: rgb(255 255 255 / .85);
+    --dot: #6B7886;
+    --dot-hover: #1A2330;
+    --accent-glow: rgb(var(--accent-rgb) / .22);
+}
+
+html { background: var(--pico-background-color); }
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+main { flex: 1; padding-block: 2rem; }
+main:focus { outline: none; }
+
+/* =========================================================================
+   2. Accesibilidad
+   ========================================================================= */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -3rem;
+    z-index: 100;
+    padding: .5rem 1rem;
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    border-radius: var(--pico-border-radius);
+    transition: top var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus { top: 1rem; }
+
+/* =========================================================================
+   3. Cabecera fija con efecto vidrio
+   ========================================================================= */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    view-transition-name: site-header;   /* no se anima al cambiar de página */
+}
+@supports (backdrop-filter: blur(1px)) {
+    .site-header { backdrop-filter: blur(10px) saturate(140%); }
+}
+
+.brand { color: var(--pico-color); text-decoration: none; }
+
+/* Enlaces del menú: subrayado que crece desde el centro. */
+nav .nav-desktop a {
+    position: relative;
+    text-decoration: none;
+    transition: color var(--dur-fast) ease;
+}
+nav .nav-desktop a::after {
+    content: "";
+    position: absolute;
+    left: var(--pico-nav-link-spacing-horizontal, .5rem);
+    right: var(--pico-nav-link-spacing-horizontal, .5rem);
+    bottom: .2rem;
+    height: 2px;
+    background: var(--pico-primary);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transition: transform var(--dur) var(--ease-out);
+}
+nav .nav-desktop a:hover::after,
+nav .nav-desktop a:focus-visible::after,
+nav .nav-desktop a[aria-current="page"]::after { transform: scaleX(1); }
+
+nav a[aria-current="page"] { color: var(--pico-primary); }
+/* Grupo derecho: menú escritorio + botón de tema + botón de menú móvil. */
+.nav-end { display: flex; align-items: center; gap: .5rem; }
+
+/* Botones redondos de icono (abrir/cerrar menú).
+   "a.nav-toggle" (no ".nav-toggle"): app.js le añade role="button" y la regla
+   de Pico "a[role=button]" tiene más especificidad que una sola clase. */
+a.nav-toggle,
+.drawer-close {
+    display: inline-grid;
+    place-items: center;
+    width: 2.5rem; height: 2.5rem;
+    margin: 0; padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--pico-muted-border-color);
+    color: var(--fg);
+    text-decoration: none;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur) var(--ease-out);
+}
+a.nav-toggle {
+    width: 2.9rem; height: 2.9rem;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0;            /* sin espacio de línea extra alrededor del icono */
+    line-height: 0;
+}
+a.nav-toggle:hover, a.nav-toggle:focus-visible,
+.drawer-close:hover, .drawer-close:focus-visible { background: var(--surface); color: var(--pico-primary); }
+a.nav-toggle:hover, a.nav-toggle:active { transform: none; box-shadow: none; }
+.drawer-close:hover { transform: rotate(90deg); }
+a.nav-toggle .icon { width: 1.75rem; height: 1.75rem; vertical-align: 0; margin: 0; }
+.drawer-close .icon { width: 1.35rem; height: 1.35rem; vertical-align: 0; }
+
+/* ---- Menú lateral móvil (drawer): entra de derecha a izquierda ----
+   Abierto con .is-open (app.js) o con :target (#menu-movil, sin JS). */
+:root { --drawer-dur: .42s; }
+
+.drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    visibility: hidden;
+    pointer-events: none;
+    /* Al cerrar, se oculta cuando termina la animación de salida. */
+    transition: visibility 0s linear var(--drawer-dur);
+}
+.drawer.is-open,
+.drawer:target {
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / .55);
+    opacity: 0;
+    transition: opacity var(--drawer-dur) ease;
+}
+@supports (backdrop-filter: blur(2px)) {
+    .drawer-backdrop { backdrop-filter: blur(3px); }
+}
+
+.drawer-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(20rem, 86vw);
+    height: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.25rem 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--pico-card-background-color);
+    border-left: 1px solid var(--pico-muted-border-color);
+    box-shadow: -16px 0 48px rgb(0 0 0 / .35);
+    transform: translateX(100%);
+    transition: transform var(--drawer-dur) var(--ease-out);
+}
+.drawer-panel:focus { outline: none; }
+
+.drawer.is-open .drawer-backdrop,
+.drawer:target .drawer-backdrop { opacity: 1; }
+.drawer.is-open .drawer-panel,
+.drawer:target .drawer-panel { transform: none; }
+
+.drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    margin-bottom: .75rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+}
+
+/* Anula el layout horizontal que Pico aplica a nav/ul/li/a. */
+.drawer nav { display: block; }
+.drawer .drawer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .25rem;
+    margin: 0;
+    padding: 0;
+}
+.drawer .drawer-links li {
+    display: block;
+    margin: 0;
+    padding: 0;
+    /* Entrada escalonada de los enlaces. */
+    opacity: 0;
+    transform: translateX(1.5rem);
+    transition: opacity .3s ease, transform .45s var(--ease-out);
+}
+.drawer.is-open .drawer-links li,
+.drawer:target .drawer-links li { opacity: 1; transform: none; }
+.drawer.is-open .drawer-links li:nth-child(1), .drawer:target .drawer-links li:nth-child(1) { transition-delay: .08s; }
+.drawer.is-open .drawer-links li:nth-child(2), .drawer:target .drawer-links li:nth-child(2) { transition-delay: .13s; }
+.drawer.is-open .drawer-links li:nth-child(3), .drawer:target .drawer-links li:nth-child(3) { transition-delay: .18s; }
+.drawer.is-open .drawer-links li:nth-child(4), .drawer:target .drawer-links li:nth-child(4) { transition-delay: .23s; }
+.drawer.is-open .drawer-links li:nth-child(5), .drawer:target .drawer-links li:nth-child(5) { transition-delay: .28s; }
+.drawer.is-open .drawer-links li:nth-child(6), .drawer:target .drawer-links li:nth-child(6) { transition-delay: .33s; }
+
+.drawer .drawer-links a {
+    display: block;
+    margin: 0;
+    padding: .85rem 1rem;
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-color);
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, padding-left var(--dur) var(--ease-out);
+}
+.drawer .drawer-links a:hover,
+.drawer .drawer-links a:focus-visible {
+    background: var(--pico-dropdown-hover-background-color);
+    color: var(--pico-primary);
+    padding-left: 1.35rem;
+}
+.drawer .drawer-links a[aria-current="page"] {
+    color: var(--pico-primary);
+    background: rgb(var(--accent-rgb) / .12);
+    box-shadow: inset 3px 0 0 var(--pico-primary);
+}
+
+/* Bloquea el scroll de la página mientras el menú está abierto. */
+html:has(.drawer.is-open),
+html:has(.drawer:target) { overflow: hidden; }
+
+/* Móvil primero: lista horizontal oculta; en escritorio, al revés. */
+.nav-desktop { display: none; }
+
+@media (min-width: 768px) {
+    .nav-desktop { display: flex; }
+    a.nav-toggle,
+    .drawer { display: none; }
+}
+
+/* =========================================================================
+   4. Botón de tema
+   ========================================================================= */
+.theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.5rem; height: 2.5rem;
+    padding: 0; margin: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--pico-muted-border-color);
+    color: var(--fg);
+}
+.theme-toggle[hidden] { display: none; }
+.theme-toggle:hover { background: var(--surface); color: var(--pico-primary); }
+.theme-toggle svg {
+    grid-area: 1 / 1;
+    width: 1.25rem; height: 1.25rem;
+    transition: transform .5s var(--ease-out), opacity var(--dur-fast) ease;
+}
+/* En oscuro se muestra el sol (pasar a claro); en claro, la luna. */
+[data-theme="dark"]  .theme-toggle .icon-moon,
+[data-theme="light"] .theme-toggle .icon-sun-dim { opacity: 0; transform: rotate(-90deg) scale(.5); }
+
+/* En móvil el botón de la cabecera se oculta: el tema se cambia desde el menú lateral. */
+.theme-toggle--header { display: none; }
+@media (min-width: 768px) {
+    .theme-toggle--header { display: inline-grid; }
+}
+
+/* Botón de tema dentro del menú lateral (fila completa con texto). */
+.drawer-theme {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    width: 100%;
+    margin: auto 0 0;            /* empuja la fila al final del panel */
+    padding: .85rem 1rem;
+    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-muted-border-color);
+    background: transparent;
+    color: var(--fg);
+    font-size: 1rem;
+    text-align: left;
+}
+.drawer-theme[hidden] { display: none; }
+.drawer-theme:hover, .drawer-theme:focus-visible {
+    background: var(--pico-dropdown-hover-background-color);
+    color: var(--pico-primary);
+    transform: none;
+    box-shadow: none;
+}
+.drawer-theme-icons { display: inline-grid; place-items: center; }
+.drawer-theme-icons .icon {
+    grid-area: 1 / 1;
+    width: 1.35rem; height: 1.35rem;
+    vertical-align: 0;
+    transition: transform .5s var(--ease-out), opacity var(--dur-fast) ease;
+}
+[data-theme="dark"]  .drawer-theme .icon-moon,
+[data-theme="light"] .drawer-theme .icon-sun-dim { opacity: 0; transform: rotate(-90deg) scale(.5); }
+.drawer-panel nav { margin-bottom: 1.5rem; }
+
+/* =========================================================================
+   4b. Iconos (sprite public/assets/icons.svg, función icon() en PHP)
+   Heredan el color del texto (currentColor) y escalan con la fuente.
+   ========================================================================= */
+.icon {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -.2em;
+    flex-shrink: 0;
+}
+.with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+.card-title.with-icon .icon { color: var(--pico-primary); width: 1.4em; height: 1.4em; }
+
+/* =========================================================================
+   5. Botones y enlaces
+   ========================================================================= */
+[role="button"], button {
+    transition: transform var(--dur-fast) var(--ease-out),
+                box-shadow var(--dur-fast) ease,
+                background-color var(--dur-fast) ease,
+                border-color var(--dur-fast) ease,
+                color var(--dur-fast) ease;
+}
+[role="button"]:hover, button:hover { transform: translateY(-2px); box-shadow: 0 6px 18px var(--accent-glow); }
+[role="button"]:active, button:active { transform: translateY(0); }
+
+/* =========================================================================
+   6. Contenido y cards
+   ========================================================================= */
+.lead { font-size: 1.15rem; color: var(--pico-muted-color); }
+.more { margin-top: 1.25rem; }
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+    gap: 1rem;
+}
+.cards > article {
+    position: relative;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--pico-muted-border-color);
+    transition: transform var(--dur) var(--ease-out),
+                box-shadow var(--dur) var(--ease-out),
+                border-color var(--dur) ease;
+}
+.cards > article > footer { margin-top: auto; }
+.cards > article:hover,
+.cards > article:focus-within {
+    transform: translateY(-6px);
+    border-color: rgb(var(--accent-rgb) / .55);
+    box-shadow: 0 14px 34px -12px var(--accent-glow), 0 0 0 1px rgb(var(--accent-rgb) / .15);
+}
+.card-title { font-size: 1.25rem; }
+
+.error-page { text-align: center; padding-block: 3rem; }
+.error-code {
+    font-size: 4rem; font-weight: 700; margin: 0;
+    color: var(--pico-primary);
+    text-shadow: 0 0 28px var(--accent-glow);
+}
+.error-page pre { text-align: left; white-space: pre-wrap; }
+
+/* =========================================================================
+   6a. Secciones de Inicio: quiénes somos, disponibilidad, valores y CTA
+   ========================================================================= */
+.home-section { margin-top: 3.5rem; }
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+}
+@media (min-width: 1024px) {
+    .about-grid { grid-template-columns: 1fr 1fr 1.15fr; }
+    .about-grid--two { grid-template-columns: 1fr 1fr; }
+}
+
+.info-card {
+    margin: 0;
+    border: 1px solid var(--pico-muted-border-color);
+    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) ease;
+}
+.info-card:hover {
+    transform: translateY(-4px);
+    border-color: rgb(var(--accent-rgb) / .45);
+    box-shadow: 0 14px 34px -14px var(--accent-glow);
+}
+.info-card-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: 0 0 .75rem;
+    padding: 0;
+    background: none;
+    border: 0;
+}
+.info-card-head h3, .info-card-head h2 { margin: 0; }
+.info-card-head .icon { width: 1.6rem; height: 1.6rem; color: var(--pico-primary); vertical-align: 0; }
+.info-card > p:last-child { margin-bottom: 0; }
+
+/* ---- Widget de disponibilidad ---- */
+:root[data-theme="dark"]  { --ok: #4ADE80; --off: #F08080; }
+:root[data-theme="light"] { --ok: #15803D; --off: #B42318; }
+
+.availability-status {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .25rem;
+    font-size: 1.1rem;
+}
+.availability.is-open   .availability-status strong { color: var(--ok); }
+.availability.is-closed .availability-status strong { color: var(--off); }
+.status-dot {
+    position: relative;
+    width: .7rem; height: .7rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--off);
+}
+.availability.is-open .status-dot { background: var(--ok); }
+/* Onda que late solo cuando está abierto. */
+.availability.is-open .status-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--ok);
+    animation: pulse-ring 2s ease-out infinite;
+}
+.availability-detail { color: var(--pico-muted-color); margin-bottom: .75rem; }
+.availability-note { color: var(--pico-muted-color); font-size: .9rem; margin: .75rem 0 0; }
+
+.schedule { list-style: none; margin: 0; padding: 0; }
+.schedule li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .45rem .6rem;
+    margin: 0;
+    list-style: none;
+    border-radius: var(--pico-border-radius);
+    font-size: .95rem;
+}
+.schedule li + li { border-top: 1px dashed var(--pico-muted-border-color); }
+.schedule li.is-today {
+    background: rgb(var(--accent-rgb) / .12);
+    font-weight: 600;
+    border-top-color: transparent;
+}
+.schedule li.is-today + li { border-top-color: transparent; }
+.schedule small { color: var(--pico-muted-color); font-weight: 400; }
+
+/* ---- Valores ---- */
+.values {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+}
+.values .value {
+    list-style: none;
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-muted-border-color);
+    border-top: 3px solid var(--pico-primary);
+    background: var(--pico-card-background-color);
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.values .value:hover { transform: translateY(-4px); box-shadow: 0 12px 28px -14px var(--accent-glow); }
+.values .value span { color: var(--pico-muted-color); font-size: .95rem; }
+
+/* ---- Call to action ---- */
+.cta {
+    position: relative;
+    margin-top: 4rem;
+    padding: clamp(2rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem);
+    border-radius: calc(var(--pico-border-radius) * 3);
+    border: 1px solid rgb(var(--accent-rgb) / .35);
+    background-color: var(--slide-bg);
+    background-image:
+        radial-gradient(ellipse at 0% 0%, rgb(var(--accent-rgb) / .35), transparent 55%),
+        radial-gradient(ellipse at 100% 100%, var(--blob-b), transparent 60%);
+    background-size: 200% 200%;
+    animation: bg-drift 16s ease-in-out infinite alternate;
+    text-align: center;
+    overflow: hidden;
+}
+.cta-content { max-width: 40rem; margin: 0 auto; }
+.cta h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); margin-bottom: .5rem; }
+.cta p { color: var(--pico-muted-color); font-size: 1.1rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.actions [role="button"] { margin: 0; }
+.cta .actions { justify-content: center; }
+.cta .actions [role="button"] { max-width: 100%; overflow-wrap: anywhere; }
+.cta .icon { width: 1.2em; height: 1.2em; }
+
+/* =========================================================================
+   6c. Botón "volver arriba" con anillo de progreso de lectura
+   ========================================================================= */
+.to-top {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    width: 3.25rem; height: 3.25rem;
+    margin: 0; padding: 0;
+    border-radius: 50%;
+    border: 0;
+    background: var(--header-bg);
+    color: var(--fg);
+    box-shadow: 0 8px 24px rgb(0 0 0 / .25);
+    /* Oculto (pero animable) hasta pasar cierto scroll. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1rem) scale(.9);
+    transition: opacity var(--dur) ease, transform var(--dur) var(--ease-out),
+                visibility 0s linear var(--dur), color var(--dur-fast) ease;
+}
+@supports (backdrop-filter: blur(1px)) {
+    .to-top { backdrop-filter: blur(8px); }
+}
+.to-top[hidden] { display: none; }
+.to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+}
+.to-top:hover, .to-top:focus-visible { color: var(--pico-primary); transform: translateY(-3px); }
+.to-top .icon { grid-area: 1 / 1; width: 1.4rem; height: 1.4rem; vertical-align: 0; }
+.to-top:hover .icon { animation: nudge-up .6s var(--ease-out); }
+
+.to-top-ring {
+    grid-area: 1 / 1;
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);      /* el progreso empieza arriba */
+}
+.to-top-ring circle { fill: none; stroke-width: 2.5; }
+.to-top-track { stroke: var(--pico-muted-border-color); }
+.to-top-progress {
+    stroke: var(--pico-primary);
+    stroke-linecap: round;
+    stroke-dasharray: 138.23;       /* 2 · π · 22 */
+    stroke-dashoffset: 138.23;
+}
+
+/* =========================================================================
+   6b. Fondo de partículas (solo Inicio)
+   Pico pinta el fondo en :root y body es transparente, así que z-index:-1
+   deja el canvas entre el fondo y todo el contenido.
+   ========================================================================= */
+.bg-particles {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+.bg-particles.is-ready { opacity: 1; }
+
+/* =========================================================================
+   7. Slider
+   ========================================================================= */
+.slider {
+    position: relative;
+    margin-bottom: 2.5rem;
+}
+.slider-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    border-radius: calc(var(--pico-border-radius) * 2);
+    border: 1px solid var(--pico-muted-border-color);
+}
+.slider-track::-webkit-scrollbar { display: none; }
+.slider-track:focus-visible { outline: 2px solid var(--pico-primary); outline-offset: 3px; }
+
+.slide {
+    position: relative;
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    min-height: clamp(16rem, 45vw, 24rem);
+    display: grid;
+    place-items: center;
+    padding: 2.5rem 1.25rem 4rem;
+    text-align: center;
+    overflow: hidden;
+    background-color: var(--slide-bg);
+    background-size: 200% 200%;
+    animation: bg-drift 18s ease-in-out infinite alternate;
+}
+.slide--1 { background-image: radial-gradient(ellipse at 20% 20%, rgb(var(--accent-rgb) / .35), transparent 55%), radial-gradient(ellipse at 80% 90%, var(--blob-a), transparent 60%); }
+.slide--2 { background-image: radial-gradient(ellipse at 80% 15%, rgb(var(--accent-rgb) / .30), transparent 55%), radial-gradient(ellipse at 15% 85%, var(--blob-b), transparent 60%); }
+.slide--3 { background-image: radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / .30), transparent 60%), radial-gradient(ellipse at 90% 80%, var(--blob-c), transparent 55%); }
+
+.slide-content { max-width: 36rem; }
+.slide-content h2 { font-size: clamp(1.6rem, 4.5vw, 2.6rem); margin-bottom: .5rem; }
+.slide-content p { color: var(--pico-muted-color); font-size: 1.1rem; }
+.slide-content [role="button"] { margin: 0; }
+
+/* Entrada del texto de la diapositiva activa (clase puesta por app.js). */
+.slider.is-ready .slide .slide-content { opacity: .35; transform: translateY(12px); transition: opacity var(--dur) ease, transform .6s var(--ease-out); }
+.slider.is-ready .slide.is-active .slide-content { opacity: 1; transform: none; }
+
+.slider-controls {
+    position: absolute;
+    left: 50%;
+    bottom: .9rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .3rem .5rem;
+    border-radius: 999px;
+    background: var(--controls-bg);
+}
+.slider-controls[hidden] { display: none; }
+
+.slider-btn {
+    width: 2.25rem; height: 2.25rem;
+    padding: 0; margin: 0;
+    border-radius: 50%;
+    font-size: 1.1rem; line-height: 1;
+    background: transparent;
+    border: 1px solid var(--pico-muted-border-color);
+    color: var(--fg);
+}
+.slider-btn:hover { background: var(--surface); }
+.slider-btn { display: inline-grid; place-items: center; }
+.slider-btn .icon { width: 1.1rem; height: 1.1rem; vertical-align: 0; }
+.slider-pause[data-state="playing"] .when-paused,
+.slider-pause[data-state="paused"]  .when-playing { display: none; }
+
+.slider-dots { display: flex; gap: .4rem; }
+.slider-dot {
+    position: relative;
+    width: .7rem; height: .7rem;
+    padding: 0; margin: 0;
+    border-radius: 999px;
+    border: 0;
+    background: var(--dot);
+    transition: width var(--dur) var(--ease-out), background-color var(--dur-fast) ease;
+}
+.slider-dot:hover { transform: none; box-shadow: none; background: var(--dot-hover); }
+.slider-dot[aria-current="true"] { width: 1.6rem; background: var(--pico-primary); }
+/* Área táctil mínima de los puntos sin agrandarlos visualmente. */
+.slider-dot::before { content: ""; position: absolute; inset: -.6rem -.25rem; }
+
+/* =========================================================================
+   8. Pie
+   ========================================================================= */
+.site-footer {
+    border-top: 1px solid var(--pico-muted-border-color);
+    padding-block: 1.25rem;
+    color: var(--pico-muted-color);
+}
+
+/* =========================================================================
+   9. Animaciones (solo si el usuario no pidió reducir movimiento)
+   ========================================================================= */
+@keyframes bg-drift  { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+/* Usa "translate" (no "transform") para no chocar con el efecto hover de las cards. */
+@keyframes pulse-ring { from { transform: scale(1); opacity: .7; } to { transform: scale(2.6); opacity: 0; } }
+@keyframes nudge-up { 40% { transform: translateY(-4px); } }
+@keyframes rise-in   { from { opacity: 0; translate: 0 24px; } }
+@keyframes page-out  { to   { opacity: 0; transform: translateY(-8px); } }
+@keyframes page-in   { from { opacity: 0; transform: translateY(12px); } }
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Transición entre páginas (View Transitions entre documentos).
+       Navegadores sin soporte simplemente cambian de página sin animar. */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation: page-out .2s ease-in both; }
+    ::view-transition-new(root) { animation: page-in .35s var(--ease-out) both; }
+
+    /* Cambio de tema: app.js anima un círculo que se expande desde el botón.
+       Mientras dura, se desactivan las animaciones de página y la cabecera
+       forma parte de la captura completa. */
+    html.theme-switching .site-header { view-transition-name: none; }
+    html.theme-switching::view-transition-old(root),
+    html.theme-switching::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+    /* Las cards aparecen al entrar en pantalla (animaciones ligadas al scroll).
+       Sin soporte, se muestran normalmente. */
+    @supports (animation-timeline: view()) {
+        .cards > article {
+            animation: rise-in linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 45%;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .slider-track { scroll-behavior: auto; }
+}

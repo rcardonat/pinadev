@@ -1,0 +1,17 @@
+# Raíz del proyecto (para hosting sin acceso a virtual hosts, p. ej. cPanel).
+# Todas las peticiones se reenvían internamente a public/. Así ningún archivo
+# fuera de public/ (vendor, app, config, database, .git, .env, *.md, *.sql...)
+# se sirve directamente: o existe dentro de public/ o lo resuelve index.php (404).
+
+Options -Indexes
+DirectoryIndex index.php
+
+# Sin mod_rewrite no hay forma segura de servir el sitio: denegar todo.
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
