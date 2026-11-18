@@ -6,14 +6,15 @@ namespace App\Models;
 use DateTimeImmutable;
 
 /**
- * Información institucional: misión, visión, valores, contacto y horario.
+ * Información del sitio: quién hace los juegos, valores, contacto, horario
+ * de respuesta, apartado destacado, cifras y redes.
  *
- * Datos fijos de ejemplo (editar aquí). Más adelante pueden venir de MySQL
- * sin cambiar controladores ni vistas.
+ * ⚠ Textos de ejemplo en primera persona: ajústalos a tu historia.
+ * Más adelante pueden venir de MySQL sin cambiar controladores ni vistas.
  */
 final class Company
 {
-    /** Horario de atención por día ISO (1 = lunes … 7 = domingo). null = cerrado. */
+    /** Horario en que respondo mensajes, por día ISO (1 = lunes … 7 = domingo). null = no respondo. */
     private const HOURS = [
         1 => ['08:00', '18:00'],
         2 => ['08:00', '18:00'],
@@ -32,21 +33,68 @@ final class Company
     public static function info(): array
     {
         return [
-            'mission' => 'Desarrollar soluciones digitales seguras, accesibles y fáciles de usar que ayuden a nuestros clientes a crecer.',
-            'vision'  => 'Ser un referente regional en desarrollo web de calidad, reconocido por la confianza y los resultados de quienes trabajan con nosotros.',
-            // 'icon' es opcional: si el icono no existe en el sprite, no se muestra.
+            // Presentación personal (página "Sobre mí").
+            'bio'     => 'Hago videojuegos de forma independiente: diseño, programo, dibujo y publico cada proyecto por mi cuenta. Empecé creando pequeños juegos para amigos y hoy comparto mis mundos con jugadores de todas partes.',
+            // "Por qué hago juegos" y "Hacia dónde voy".
+            'mission' => 'Crear juegos pequeños pero memorables, con mecánicas claras y un estilo propio, que se disfruten en una tarde y se recuerden mucho después.',
+            'vision'  => 'Seguir creciendo como creador independiente, publicar un juego más ambicioso en Steam y construir una comunidad que participe en cada proyecto.',
+            // "Lo que guía mis juegos".
             'values'  => [
-                ['name' => 'Compromiso',    'text' => 'Cumplimos lo que prometemos.'],
-                ['name' => 'Innovación',    'text' => 'Buscamos siempre una mejor forma de hacerlo.'],
-                ['name' => 'Transparencia', 'text' => 'Comunicación clara en cada etapa.'],
-                ['name' => 'Calidad',       'text' => 'Cuidamos cada detalle del resultado.'],
-                ['name' => 'Cercanía',      'text' => 'Escuchamos y acompañamos a cada cliente.'],
+                ['name' => 'Jugabilidad primero',  'text' => 'Si no es divertido de jugar, no sale.'],
+                ['name' => 'Hecho a mano',         'text' => 'Cada pixel y cada línea de código con intención.'],
+                ['name' => 'Escuchar a quien juega', 'text' => 'Tus comentarios mejoran cada actualización.'],
+                ['name' => 'Precio justo',         'text' => 'Juegos accesibles, sin trucos ni micropagos.'],
+                ['name' => 'Constancia',           'text' => 'Avances y devlogs de forma regular.'],
             ],
             'email'    => 'contacto@ejemplo.com',
             'phone'    => '+593 00 000 0000',
             'phone_href' => '+593000000000',
-            'address'  => ['Calle Ejemplo 123', 'Ciudad, País'],
-            'response_time' => 'Respondemos en menos de 24 horas hábiles.',
+            // Sin dirección física: es un sitio personal (privacidad).
+            'location' => ['Ecuador', 'Desarrollo en remoto'],
+            'response_time' => 'Suelo responder en menos de 48 horas.',
+        ];
+    }
+
+    /**
+     * Apartado destacado de Inicio (imagen + insignia flotante + beneficios).
+     *
+     * 'image': ruta bajo public/assets/ (se recomienda WebP, ~1000×1100 px).
+     *          Si el archivo no existe, se muestra una ilustración CSS.
+     * 'link':  alias de ruta del botón (ver app/bootstrap.php).
+     * 'icon' de cada beneficio: opcional; si no existe en el sprite, se usa un punto.
+     */
+    public static function highlight(): array
+    {
+        return [
+            'title'      => 'Una persona, muchos mundos',
+            'subtitle'   => 'Desde la primera idea hasta el lanzamiento, cada juego lo diseño, programo y publico yo. Sin estudios ni intermediarios: solo ganas de crear buenos juegos.',
+            'image'      => 'img/destacado.webp',
+            'image_alt'  => 'Captura de uno de mis juegos',
+            'badge_value' => '3 juegos',
+            'badge_text'  => 'publicados y en camino',
+            'features'   => [
+                ['title' => 'Hecho a mano',             'text' => 'Diseño, código, arte y sonido creados por una sola persona.',  'icon' => 'home-lg'],
+                ['title' => 'Actualizaciones constantes', 'text' => 'Escucho a quienes juegan y mejoro cada juego tras su lanzamiento.', 'icon' => 'calendar-days'],
+                ['title' => 'En Steam e itch.io',       'text' => 'Encuentra mis juegos en tus tiendas favoritas o juégalos en el navegador.', 'icon' => 'steam'],
+            ],
+            'cta'        => 'Ver mis juegos',
+            'link'       => 'juegos',
+        ];
+    }
+
+    /**
+     * Cifras del segmento "En números" de Inicio (datos de ejemplo; más
+     * adelante pueden calcularse desde MySQL).
+     * 'icon' es opcional: si no existe en el sprite, no se muestra.
+     *
+     * @return list<array{label: string, value: int, suffix: string, icon: string}>
+     */
+    public static function stats(): array
+    {
+        return [
+            ['label' => 'Visitas',   'value' => 125400, 'suffix' => '+', 'icon' => 'eye'],
+            ['label' => 'Descargas', 'value' => 8750,   'suffix' => '+', 'icon' => 'download'],
+            ['label' => 'Ventas',    'value' => 1320,   'suffix' => '',  'icon' => 'shop'],
         ];
     }
 
@@ -83,11 +131,11 @@ final class Company
 
         if ($hours !== null && $time >= $hours[0] && $time < $hours[1]) {
             $open = true;
-            $status = 'Abierto ahora';
-            $detail = 'Atendemos hasta las ' . $hours[1] . ' de hoy.';
+            $status = 'Disponible ahora';
+            $detail = 'Respondo mensajes hasta las ' . $hours[1] . ' de hoy.';
         } else {
             $open = false;
-            $status = 'Cerrado ahora';
+            $status = 'Fuera de horario';
             $detail = self::nextOpening($today, $time);
         }
 
@@ -103,16 +151,16 @@ final class Company
     {
         $hours = self::HOURS[$today];
         if ($hours !== null && $time < $hours[0]) {
-            return 'Abrimos hoy a las ' . $hours[0] . '.';
+            return 'Vuelvo a responder hoy a las ' . $hours[0] . '.';
         }
         for ($i = 1; $i <= 7; $i++) {
             $day = ($today - 1 + $i) % 7 + 1;
             if (self::HOURS[$day] !== null) {
                 $when = $i === 1 ? 'mañana' : 'el ' . self::DAY_NAMES[$day];
-                return 'Abrimos ' . $when . ' a las ' . self::HOURS[$day][0] . '.';
+                return 'Vuelvo a responder ' . $when . ' a las ' . self::HOURS[$day][0] . '.';
             }
         }
-        return 'Escríbenos y te responderemos pronto.';
+        return 'Escríbeme y te responderé pronto.';
     }
 
     /**

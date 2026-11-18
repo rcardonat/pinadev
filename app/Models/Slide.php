@@ -31,9 +31,9 @@ final class Slide
     public static function all(): array
     {
         return [
-            ['title' => 'Bienvenido a PinaDev',    'text' => 'Soluciones digitales pensadas para crecer contigo.',     'cta' => 'Conócenos',       'link' => 'nosotros',  'theme' => 1],
-            ['title' => 'Nuestros productos',      'text' => 'Descubre el catálogo y encuentra lo que necesitas.',     'cta' => 'Ver productos',   'link' => 'productos', 'theme' => 2],
-            ['title' => 'Hablemos de tu proyecto', 'text' => 'Cuéntanos tu idea y te ayudamos a hacerla realidad.',    'cta' => 'Contáctanos',     'link' => 'contacto',  'theme' => 3],
+            ['title' => 'Juegos indie hechos a mano',        'text' => 'Pequeños mundos creados de principio a fin por una sola persona.', 'cta' => 'Ver mis juegos', 'link' => 'juegos',   'theme' => 1],
+            ['title' => 'Ya disponible: Ecos del Bosque',    'text' => 'Mi lanzamiento más reciente. Pruébalo en Steam o itch.io.',        'cta' => 'Descúbrelo',     'link' => 'juegos',   'theme' => 2],
+            ['title' => '¿Prensa o creador de contenido?',   'text' => 'Pide una clave, una entrevista o propón una colaboración.',        'cta' => 'Escríbeme',      'link' => 'contacto', 'theme' => 3],
         ];
     }
 }

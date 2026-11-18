@@ -109,7 +109,9 @@ body {
     overflow-x: hidden;
 }
 
-main { flex: 1; padding-block: 2rem; }
+/* Pico da padding a "body > main"; el espacio lo pone .page-body para que el hero toque la cabecera. */
+body > main { flex: 1; padding-block: 0; }
+.page-body { padding-block: 2rem; }
 main:focus { outline: none; }
 
 /* =========================================================================
@@ -472,6 +474,81 @@ html:has(.drawer:target) { overflow: hidden; }
 .error-page pre { text-align: left; white-space: pre-wrap; }
 
 /* =========================================================================
+   5b. Encabezado de página (hero) — todas las páginas salvo Inicio
+   ========================================================================= */
+.page-hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(2.5rem, 7vw, 4.5rem);
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    background-color: var(--slide-bg);
+}
+/* Fondo con degradados que se mueven despacio (capa aparte, como el slider). */
+.page-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(ellipse at 10% 0%, rgb(var(--accent-rgb) / .38), transparent 55%),
+        radial-gradient(ellipse at 95% 100%, var(--blob-b), transparent 60%),
+        radial-gradient(ellipse at 60% 40%, var(--blob-c), transparent 55%);
+    background-size: 200% 200%;
+    animation: bg-drift 18s ease-in-out infinite alternate;
+}
+/* Rejilla sutil para dar textura. */
+.page-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgb(var(--accent-rgb) / .07) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(var(--accent-rgb) / .07) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(to bottom, #000 20%, transparent 95%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 95%);
+}
+.page-hero-inner { position: relative; z-index: 1; }
+.page-hero h1 {
+    margin: .35rem 0 .5rem;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    line-height: 1.1;
+}
+.page-hero-subtitle {
+    max-width: 42rem;
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--pico-muted-color);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .page-hero-inner > * { animation: rise-in-hero .6s var(--ease-out) both; }
+    .page-hero-inner > :nth-child(2) { animation-delay: .08s; }
+    .page-hero-inner > :nth-child(3) { animation-delay: .16s; }
+}
+
+/* Ruta de navegación (Inicio › Página). Anula el layout de nav de Pico. */
+.page-hero .breadcrumb { display: block; }
+.page-hero .breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: .9rem;
+}
+.page-hero .breadcrumb li { display: inline-flex; align-items: center; gap: .4rem; margin: 0; padding: 0; }
+.page-hero .breadcrumb li::before { content: none; }
+.page-hero .breadcrumb li + li::before {
+    content: "›";
+    float: none;
+    color: var(--pico-muted-color);
+}
+.page-hero .breadcrumb a { margin: 0; padding: 0; color: var(--pico-muted-color); text-decoration: none; }
+.page-hero .breadcrumb a:hover, .page-hero .breadcrumb a:focus-visible { color: var(--pico-primary); text-decoration: underline; }
+.page-hero .breadcrumb [aria-current="page"] { color: var(--fg); font-weight: 600; }
+
+/* =========================================================================
    6a. Secciones de Inicio: quiénes somos, disponibilidad, valores y CTA
    ========================================================================= */
 .home-section { margin-top: 3.5rem; }
@@ -510,8 +587,8 @@ html:has(.drawer:target) { overflow: hidden; }
 .info-card > p:last-child { margin-bottom: 0; }
 
 /* ---- Widget de disponibilidad ---- */
-:root[data-theme="dark"]  { --ok: #4ADE80; --off: #F08080; }
-:root[data-theme="light"] { --ok: #15803D; --off: #B42318; }
+:root[data-theme="dark"]  { --ok: #4ADE80; --off: #F08080; --ok-text: #0B1F12; }
+:root[data-theme="light"] { --ok: #15803D; --off: #B42318; --ok-text: #FFFFFF; }
 
 .availability-status {
     display: flex;
@@ -561,6 +638,455 @@ html:has(.drawer:target) { overflow: hidden; }
 }
 .schedule li.is-today + li { border-top-color: transparent; }
 .schedule small { color: var(--pico-muted-color); font-weight: 400; }
+
+/* ---- Apartado destacado (imagen + insignia flotante + beneficios) ---- */
+.highlight {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+    margin-block: 1rem 3.5rem;
+}
+@media (min-width: 900px) {
+    .highlight { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 3.5rem; }
+}
+
+.highlight-media {
+    position: relative;
+    /* Deja sitio para que la insignia sobresalga sin cortarse. */
+    margin: 0 1rem 1.5rem 0;
+}
+.highlight-media img,
+.highlight-placeholder {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 10 / 11;
+    object-fit: cover;
+    border-radius: calc(var(--pico-border-radius) * 4);
+    border: 1px solid var(--pico-muted-border-color);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / .45);
+}
+
+/* Ilustración de respaldo: una "ventana" de app con bloques, en colores del tema. */
+.highlight-placeholder {
+    display: grid;
+    place-items: center;
+    padding: 12%;
+    background-color: var(--slide-bg);
+    background-image:
+        radial-gradient(ellipse at 15% 10%, rgb(var(--accent-rgb) / .40), transparent 55%),
+        radial-gradient(ellipse at 90% 95%, var(--blob-b), transparent 60%);
+}
+.ph-window {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+    width: 100%;
+    padding: 1.25rem;
+    border-radius: calc(var(--pico-border-radius) * 2);
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    box-shadow: 0 20px 40px -20px rgb(0 0 0 / .4);
+}
+.ph-dots { display: flex; gap: .35rem; margin-bottom: .4rem; }
+.ph-dots i { width: .6rem; height: .6rem; border-radius: 50%; background: var(--pico-muted-border-color); }
+.ph-dots i:first-child { background: rgb(var(--accent-rgb) / .8); }
+.ph-line { height: .7rem; width: 80%; border-radius: 99px; background: var(--pico-muted-border-color); }
+.ph-line--lg { width: 60%; height: 1.1rem; background: rgb(var(--accent-rgb) / .55); }
+.ph-line--sm { width: 45%; }
+.ph-blocks { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .4rem; }
+.ph-blocks i { aspect-ratio: 4 / 3; border-radius: var(--pico-border-radius); background: rgb(var(--accent-rgb) / .14); border: 1px solid var(--pico-muted-border-color); }
+
+.floating-badge {
+    position: absolute;
+    right: -1rem;
+    bottom: -1.5rem;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.35rem;
+    border-radius: calc(var(--pico-border-radius) * 2);
+    background: var(--pico-card-background-color);
+    border: 1px solid rgb(var(--accent-rgb) / .35);
+    box-shadow: 0 18px 40px -16px rgb(0 0 0 / .5), 0 0 0 4px rgb(var(--accent-rgb) / .08);
+    line-height: 1.2;
+}
+.floating-badge strong { font-size: 1.6rem; color: var(--pico-primary); }
+.floating-badge span { color: var(--pico-muted-color); font-size: .9rem; }
+
+.highlight-content h2 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.15; margin-bottom: .75rem; }
+
+.features { list-style: none; margin: 1.5rem 0 2rem; padding: 0; display: grid; gap: 1.1rem; }
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin: 0;
+    list-style: none;
+}
+.feature-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.75rem; height: 2.75rem;
+    border-radius: var(--pico-border-radius);
+    background: rgb(var(--accent-rgb) / .14);
+    color: var(--pico-primary);
+    transition: transform var(--dur) cubic-bezier(.34, 1.56, .64, 1), background-color var(--dur-fast) ease;
+}
+.feature-icon .icon { width: 1.35rem; height: 1.35rem; vertical-align: 0; }
+.feature-dot { width: .6rem; height: .6rem; border-radius: 50%; background: currentColor; }
+.feature-item:hover .feature-icon { transform: scale(1.1) rotate(-6deg); background: rgb(var(--accent-rgb) / .24); }
+.feature-item h3 { font-size: 1.1rem; margin: .1rem 0 .2rem; }
+.feature-item p { margin: 0; color: var(--pico-muted-color); }
+
+.highlight-btn { padding-inline: 1.75rem; }
+.highlight-btn span { display: inline-block; transition: transform var(--dur) var(--ease-out); }
+.highlight-btn:hover span { transform: translateX(4px); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .floating-badge { animation: float-y 5s ease-in-out infinite; }
+}
+
+/* ---- Contacto: formulario por preguntas ---- */
+.contact-layout { display: grid; gap: 2rem; align-items: start; }
+@media (min-width: 1024px) {
+    .contact-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+}
+.contact-aside { display: grid; gap: 1rem; }
+.contact-aside article { margin: 0; border: 1px solid var(--pico-muted-border-color); }
+
+.qform-wrap {
+    padding: clamp(1.25rem, 4vw, 2.25rem);
+    border-radius: calc(var(--pico-border-radius) * 3);
+    border: 1px solid var(--pico-muted-border-color);
+    background:
+        radial-gradient(ellipse at 0% 0%, rgb(var(--accent-rgb) / .14), transparent 55%),
+        var(--pico-card-background-color);
+}
+.qform-title { margin-bottom: 1.25rem; }
+.qform-alert {
+    padding: .8rem 1rem;
+    border-radius: var(--pico-border-radius);
+    border-left: 4px solid var(--off);
+    background: rgb(240 128 128 / .12);
+    color: var(--fg);
+}
+
+/* Campo trampa: fuera de la vista (no display:none, que algunos bots detectan). */
+.qform-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+.qstep { border: 0; margin: 0 0 1.75rem; padding: 0; min-width: 0; }
+.qstep legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: 1rem;
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: 700;
+    color: var(--fg);
+}
+.qnum {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem; height: 2rem;
+    border-radius: 50%;
+    background: var(--pico-primary);
+    color: var(--pico-primary-inverse);
+    font-size: .95rem;
+}
+.qstep legend small { font-size: .85rem; font-weight: 400; color: var(--pico-muted-color); }
+.qstep input:not([type=radio]) { font-size: 1.15rem; margin-bottom: .25rem; }
+.qerror {
+    margin: .35rem 0 0;
+    color: var(--off);
+    font-weight: 600;
+    font-size: .95rem;
+}
+.qerror::before { content: "⚠ "; }
+
+/* Opciones como tarjetas seleccionables. */
+.qoptions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: .75rem;
+}
+.qoption { position: relative; margin: 0; cursor: pointer; }
+.qoption input {
+    position: absolute;
+    opacity: 0;
+    width: 1px; height: 1px;
+    margin: 0;
+}
+.qoption-body {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    border-radius: calc(var(--pico-border-radius) * 1.5);
+    border: 2px solid var(--pico-muted-border-color);
+    background: var(--pico-background-color);
+    transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease,
+                transform var(--dur) cubic-bezier(.34, 1.56, .64, 1), box-shadow var(--dur) var(--ease-out);
+}
+.qoption-body strong { color: var(--fg); font-size: 1.05rem; }
+.qoption-body small { color: var(--pico-muted-color); }
+.qoption-icon { color: var(--pico-primary); margin-bottom: .2rem; }
+.qoption-icon .icon { width: 1.5rem; height: 1.5rem; vertical-align: 0; }
+.qoption:hover .qoption-body { border-color: rgb(var(--accent-rgb) / .6); transform: translateY(-2px); }
+.qoption input:focus-visible + .qoption-body { outline: 3px solid var(--pico-primary-focus); outline-offset: 2px; }
+.qoption input:checked + .qoption-body {
+    border-color: var(--pico-primary);
+    background: rgb(var(--accent-rgb) / .12);
+    box-shadow: 0 10px 24px -14px var(--accent-glow);
+}
+.qoption input:checked + .qoption-body strong::after { content: " ✓"; color: var(--pico-primary); }
+
+/* Etiqueta "Opcional" junto a la pregunta. */
+.qoptional {
+    padding: .15rem .55rem;
+    border-radius: 99px;
+    border: 1px solid var(--pico-muted-border-color);
+    font-size: .75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* Campo con icono a la izquierda (teléfono, correo). */
+.qinput-icon { position: relative; }
+.qinput-icon > span {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--pico-muted-color);
+    pointer-events: none;
+    line-height: 0;
+}
+.qinput-icon > span .icon { width: 1.3rem; height: 1.3rem; vertical-align: 0; }
+/* !important: Pico fija padding-inline-start con !important cuando hay aria-invalid. */
+.qinput-icon input:not([type=radio]) { padding-left: 2.9rem; padding-inline-start: 2.9rem !important; margin-bottom: 0; }
+.qinput-icon:focus-within > span { color: var(--pico-primary); }
+
+.qstep textarea { font-size: 1.05rem; resize: vertical; min-height: 8rem; margin-bottom: .25rem; }
+.qcounter { margin: 0; text-align: right; font-size: .8rem; color: var(--pico-muted-color); }
+
+/* Botones: Atrás a la izquierda; Paso / Siguiente / Enviar a la derecha. */
+.qform-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+/* width:auto: Pico pone button[type=submit] a ancho completo. */
+.qform-nav button { margin: 0; width: auto; }
+.qform-nav button[hidden] { display: none; }
+.qform-nav-end { display: flex; flex-wrap: wrap; gap: .75rem; margin-left: auto; }
+.qform-nav [data-qform-submit] { min-width: 9rem; }
+
+/* ---- Con JS: una pregunta a la vez ---- */
+.qform.is-enhanced .qstep { margin-bottom: 1.25rem; min-height: 9rem; }
+.qform-progress { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
+.qform-progress[hidden] { display: none; }
+.qform-bar {
+    flex: 1;
+    height: .45rem;
+    border-radius: 99px;
+    background: var(--pico-muted-border-color);
+    overflow: hidden;
+}
+.qform-bar i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--pico-primary);
+    transition: width var(--dur) var(--ease-out);
+}
+.qform-count { font-size: .85rem; color: var(--pico-muted-color); white-space: nowrap; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .qform.is-enhanced .qstep.is-current[data-dir="next"] { animation: q-in-next .45s var(--ease-out) both; }
+    .qform.is-enhanced .qstep.is-current[data-dir="prev"] { animation: q-in-prev .45s var(--ease-out) both; }
+}
+
+/* ---- Mensaje de éxito ---- */
+.qform-success { text-align: center; padding-block: 1rem; }
+.qform-success:focus { outline: none; }
+.qform-success-check {
+    display: inline-grid;
+    place-items: center;
+    width: 4rem; height: 4rem;
+    margin-bottom: 1rem;
+    border-radius: 50%;
+    background: rgb(var(--accent-rgb) / .15);
+    border: 2px solid var(--pico-primary);
+}
+.qform-success-check::before {
+    content: "";
+    width: 1.1rem; height: 2rem;
+    margin-top: -.4rem;
+    border: solid var(--pico-primary);
+    border-width: 0 4px 4px 0;
+    transform: rotate(45deg);
+}
+.qform-note { color: var(--pico-muted-color); }
+@media (prefers-reduced-motion: no-preference) {
+    .qform-success-check { animation: pop-in .6s cubic-bezier(.34, 1.56, .64, 1) both; }
+}
+
+/* ---- Tarjetas de juego (Inicio y Juegos) ---- */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 1.25rem;
+}
+.game-card {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) ease;
+}
+.game-card:hover, .game-card:focus-within {
+    transform: translateY(-6px);
+    border-color: rgb(var(--accent-rgb) / .55);
+    box-shadow: 0 18px 40px -16px var(--accent-glow);
+}
+
+/* Portada 16:9. Sin imagen: degradado con el título, en 3 variantes de color. */
+.game-cover {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background-color: var(--slide-bg);
+}
+.game-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-out); }
+.game-card:hover .game-cover img { transform: scale(1.06); }
+.game-cover--1 { background-image: radial-gradient(ellipse at 20% 20%, rgb(var(--accent-rgb) / .55), transparent 60%), radial-gradient(ellipse at 90% 100%, var(--blob-b), transparent 60%); }
+.game-cover--2 { background-image: radial-gradient(ellipse at 80% 10%, rgb(250 170 60 / .45), transparent 60%), radial-gradient(ellipse at 10% 100%, var(--blob-c), transparent 60%); }
+.game-cover--3 { background-image: radial-gradient(ellipse at 50% 0%, var(--blob-c), transparent 65%), radial-gradient(ellipse at 100% 100%, rgb(var(--accent-rgb) / .40), transparent 60%); }
+.game-cover-title {
+    padding: 1rem;
+    text-align: center;
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: .02em;
+    color: var(--fg);
+    text-shadow: 0 2px 18px rgb(0 0 0 / .35);
+    transition: transform .6s var(--ease-out);
+}
+.game-card:hover .game-cover-title { transform: scale(1.06); }
+
+.game-status {
+    position: absolute;
+    top: .75rem;
+    left: .75rem;
+    padding: .2rem .65rem;
+    border-radius: 99px;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    background: var(--pico-card-background-color);
+    color: var(--fg);
+    border: 1px solid var(--pico-muted-border-color);
+}
+.game-status--available   { background: var(--ok); color: var(--ok-text); border-color: transparent; }
+.game-status--development { background: #F5B942; color: #2B1D00; border-color: transparent; }
+.game-status--soon        { background: var(--pico-primary); color: var(--pico-primary-inverse); border-color: transparent; }
+
+.game-body { display: flex; flex-direction: column; flex: 1; padding: 1.1rem 1.25rem 1.25rem; }
+.game-genre { margin: 0 0 .2rem; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--pico-primary); }
+.game-title { margin: 0 0 .5rem; font-size: 1.3rem; }
+.game-summary { margin-bottom: .9rem; color: var(--pico-muted-color); }
+.game-platforms { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; padding: 0; }
+.game-platforms li {
+    list-style: none;
+    margin: 0;
+    padding: .15rem .55rem;
+    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-muted-border-color);
+    font-size: .8rem;
+    color: var(--pico-muted-color);
+}
+.game-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: auto 0 0;
+    padding: .9rem 0 0;
+    background: none;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+.game-price { font-size: 1.1rem; color: var(--fg); }
+.game-links { display: flex; flex-wrap: wrap; gap: .5rem; }
+.game-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .4rem .75rem;
+    border-radius: 99px;
+    border: 1px solid var(--pico-muted-border-color);
+    color: var(--fg);
+    font-size: .85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur) cubic-bezier(.34, 1.56, .64, 1);
+}
+.game-link .icon { width: 1rem; height: 1rem; vertical-align: 0; }
+.game-link:hover, .game-link:focus-visible { color: #FFFFFF; border-color: transparent; transform: translateY(-2px); }
+.game-link.is-steam:hover, .game-link.is-steam:focus-visible { background: linear-gradient(135deg, #1B2838, #2A475E); }
+.game-link.is-itchio:hover, .game-link.is-itchio:focus-visible { background: #D23C3C; }
+
+.games-note { margin-top: 2rem; text-align: center; color: var(--pico-muted-color); }
+.about-bio { max-width: 48rem; font-size: 1.2rem; line-height: 1.7; margin-bottom: 2rem; }
+
+/* ---- En números (contadores) ---- */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: 1rem;
+    margin: 0;
+}
+.stat {
+    display: flex;
+    flex-direction: column-reverse;     /* el número arriba, la etiqueta abajo */
+    align-items: center;
+    gap: .35rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-muted-border-color);
+    background:
+        radial-gradient(ellipse at 50% 0%, rgb(var(--accent-rgb) / .14), transparent 70%),
+        var(--pico-card-background-color);
+    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.stat:hover { transform: translateY(-4px); box-shadow: 0 12px 28px -14px var(--accent-glow); }
+.stat-value {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--pico-primary);
+    font-variant-numeric: tabular-nums;  /* los dígitos no "bailan" al contar */
+}
+.stat-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: var(--pico-muted-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: .85rem;
+}
+.stat-label .icon { width: 1.2rem; height: 1.2rem; vertical-align: 0; }
 
 /* ---- Valores ---- */
 .values {
@@ -996,6 +1522,11 @@ html:has(.drawer:target) { overflow: hidden; }
     80%  { transform: translateY(-3px) scale(1.03, .98); }
     100% { transform: translateY(-3px) scale(1, 1); }
 }
+@keyframes float-y { 50% { transform: translateY(-8px); } }
+@keyframes rise-in-hero { from { opacity: 0; transform: translateY(14px); } }
+@keyframes q-in-next { from { opacity: 0; transform: translateX(28px); } }
+@keyframes q-in-prev { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.4); } }
 @keyframes rise-in   { from { opacity: 0; translate: 0 24px; } }
 @keyframes page-out  { to   { opacity: 0; transform: translateY(-8px); } }
 @keyframes page-in   { from { opacity: 0; transform: translateY(12px); } }

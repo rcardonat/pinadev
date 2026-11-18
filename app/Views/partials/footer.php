@@ -9,7 +9,7 @@
     <div class="container footer-inner">
         <div class="footer-brand">
             <strong><?= $app_name ?></strong>
-            <small>Soluciones digitales pensadas para crecer contigo.</small>
+            <small>Videojuegos independientes hechos a mano.</small>
         </div>
 
         <?php if ($social): ?>

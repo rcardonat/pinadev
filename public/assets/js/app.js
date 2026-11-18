@@ -397,6 +397,237 @@
     }
 
     /* ---------------------------------------------------------------------
+       Contadores animados ([data-count-to]) — alternativa ligera a CountUp.js.
+       El HTML ya trae el valor final (sin JS se ve igual). Al entrar en
+       pantalla cuentan de 0 al valor con desaceleración, una sola vez.
+       Con "reducir movimiento" se deja el valor final sin animar.
+       --------------------------------------------------------------------- */
+    const counters = document.querySelectorAll('[data-count-to]');
+
+    if (counters.length && 'IntersectionObserver' in window && !reduceMotion.matches) {
+        const DURATION = 1800;
+        // Mismo formato que el servidor: separador de miles con punto (125.400).
+        const format = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const easeOut = (t) => 1 - Math.pow(1 - t, 4);
+
+        function run(el) {
+            const target = parseInt(el.dataset.countTo, 10) || 0;
+            const start = performance.now();
+            function tick(now) {
+                const t = Math.min((now - start) / DURATION, 1);
+                el.textContent = format(Math.round(target * easeOut(t)));
+                if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    io.unobserve(entry.target);
+                    run(entry.target);
+                }
+            });
+        }, { threshold: 0.4 });
+
+        counters.forEach((el) => {
+            el.textContent = '0';
+            io.observe(el);
+        });
+    }
+
+    /* ---------------------------------------------------------------------
+       Formulario por preguntas ([data-qform]).
+       Una pregunta a la vez con barra de progreso. Botones:
+         · Siguiente: valida la pregunta (en el teléfono exige un número válido).
+         · Paso: en preguntas opcionales que no son la última (teléfono),
+           la deja vacía y continúa. En la última solo está «Enviar».
+         · Enviar: en la última pregunta.
+       Enter en un campo de texto = Siguiente. Al elegir una opción con
+       ratón/dedo se avanza solo. Esta validación solo ayuda al usuario:
+       el servidor vuelve a validar todo (ContactRequest::validate).
+       --------------------------------------------------------------------- */
+    const qform = document.querySelector('[data-qform]');
+
+    if (qform) {
+        const steps = Array.from(qform.querySelectorAll('[data-step]'));
+        const progress = qform.querySelector('[data-qform-progress]');
+        const bar = qform.querySelector('[data-qform-bar]');
+        const count = qform.querySelector('[data-qform-count]');
+        const backBtn = qform.querySelector('[data-qform-back]');
+        const skipBtn = qform.querySelector('[data-qform-skip]');
+        const nextBtn = qform.querySelector('[data-qform-next]');
+        const submitBtn = qform.querySelector('[data-qform-submit]');
+        const comment = qform.elements.namedItem('comment');
+        const counter = qform.querySelector('[data-qform-counter]');
+        let current = 0;
+
+        qform.classList.add('is-enhanced');
+        progress.hidden = false;
+
+        const fieldOf = (step) => step.querySelector('input:not([type=radio]):not([type=hidden]), textarea');
+
+        function setError(step, msg) {
+            const err = step.querySelector('.qerror');
+            const field = fieldOf(step);
+            if (err) {
+                err.textContent = msg;
+                err.hidden = msg === '';
+            }
+            if (field) {
+                if (msg) field.setAttribute('aria-invalid', 'true');
+                else field.removeAttribute('aria-invalid');
+            }
+            return msg === '';
+        }
+
+        // strict = true al pulsar «Siguiente» (el teléfono debe estar escrito);
+        // strict = false al enviar (los opcionales pueden quedar vacíos).
+        function validate(step, strict) {
+            if (step.querySelector('input[type=radio]')) {
+                return setError(step, step.querySelector('input[type=radio]:checked') ? '' : 'Elige una opción.');
+            }
+            const field = fieldOf(step);
+            if (!field) return true;
+            const v = field.value.trim();
+
+            switch (field.name) {
+                case 'name':
+                    if (!v) return setError(step, 'Escribe tu nombre.');
+                    if (v.length < 2 || v.length > 80 || !/^\p{L}[\p{L}\p{M} '.-]*$/u.test(v)) {
+                        return setError(step, 'Usa solo letras (entre 2 y 80 caracteres).');
+                    }
+                    break;
+                case 'phone': {
+                    if (!v) return setError(step, strict ? 'Escribe tu número o pulsa «Paso».' : '');
+                    const digits = v.replace(/\D/g, '');
+                    if (!/^\+?[0-9\s().-]{7,20}$/.test(v) || digits.length < 7 || digits.length > 15) {
+                        return setError(step, 'Revisa el número (entre 7 y 15 dígitos) o pulsa «Paso».');
+                    }
+                    break;
+                }
+                case 'email':
+                    if (!v) return setError(step, 'Escribe tu correo.');
+                    if (v.length > 190 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+                        return setError(step, 'Revisa el correo (ejemplo: nombre@dominio.com).');
+                    }
+                    break;
+                case 'comment':
+                    if (v.length > Number(field.maxLength)) {
+                        return setError(step, `El comentario puede tener hasta ${field.maxLength} caracteres.`);
+                    }
+                    break;
+            }
+            return setError(step, '');
+        }
+
+        function show(i, dir = 'next', focus = true) {
+            current = Math.max(0, Math.min(i, steps.length - 1));
+            const step = steps[current];
+            const isFinal = step.hasAttribute('data-final');
+
+            steps.forEach((s) => {
+                const active = s === step;
+                s.hidden = !active;
+                s.classList.toggle('is-current', active);
+                s.dataset.dir = dir;
+            });
+
+            bar.style.width = ((current + 1) / steps.length) * 100 + '%';
+            count.textContent = `Pregunta ${current + 1} de ${steps.length}`;
+
+            backBtn.hidden = current === 0;
+            // «Paso» solo en preguntas opcionales intermedias; en la última basta «Enviar».
+            skipBtn.hidden = !step.hasAttribute('data-optional') || isFinal;
+            nextBtn.hidden = isFinal;
+            submitBtn.hidden = !isFinal;
+
+            const target = step.querySelector('input:checked') || fieldOf(step) || step.querySelector('input[type=radio]');
+            if (focus && target) target.focus({ preventScroll: true });
+        }
+
+        function next() {
+            if (validate(steps[current], true)) show(current + 1, 'next');
+        }
+
+        function updateCounter() {
+            if (!comment || !counter) return;
+            const len = comment.value.length;
+            counter.hidden = len === 0;
+            counter.textContent = `${len} / ${comment.maxLength}`;
+        }
+
+        function skip() {
+            const step = steps[current];
+            const field = fieldOf(step);
+            if (field) field.value = '';
+            setError(step, '');
+            updateCounter();
+            show(current + 1, 'next');
+        }
+
+        nextBtn.addEventListener('click', next);
+        skipBtn.addEventListener('click', skip);
+        backBtn.addEventListener('click', () => show(current - 1, 'prev'));
+        if (comment) comment.addEventListener('input', updateCounter);
+
+        // Enter en un campo de una línea = Siguiente (en el comentario, salto de línea).
+        qform.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.matches('input:not([type=radio])')) {
+                e.preventDefault();
+                next();
+            }
+        });
+
+        // Elegir una opción con ratón/dedo avanza solo (una vez). Con las
+        // flechas del teclado no, para poder recorrer las opciones.
+        // No se usa solo "click": etiqueta y radio generan dos clics.
+        let pointerPick = false;
+        let advanceTimer = 0;
+        const autoAdvance = () => {
+            pointerPick = false;
+            clearTimeout(advanceTimer);
+            advanceTimer = setTimeout(next, 260);
+        };
+        qform.addEventListener('pointerdown', (e) => { pointerPick = !!e.target.closest('.qoption'); });
+        qform.addEventListener('keydown', () => { pointerPick = false; });
+        qform.addEventListener('click', (e) => {
+            if (pointerPick && e.target.tagName === 'INPUT' && e.target.closest('.qoption')) autoAdvance();
+        });
+        qform.addEventListener('change', (e) => {
+            if (e.target.type !== 'radio') return;
+            setError(e.target.closest('[data-step]'), '');
+            if (pointerPick) autoAdvance();
+        });
+
+        qform.addEventListener('submit', (e) => {
+            // Revisa todo; si algo falla, vuelve a esa pregunta.
+            const bad = steps.findIndex((s) => !validate(s, false));
+            if (bad !== -1) {
+                e.preventDefault();
+                show(bad, 'prev');
+                return;
+            }
+            submitBtn.disabled = true;
+            skipBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.textContent = 'Enviando…';
+        });
+
+        // Si el servidor devolvió errores, empezar en la primera pregunta con error.
+        const firstError = steps.findIndex((s) => {
+            const err = s.querySelector('.qerror');
+            return err && !err.hidden;
+        });
+        updateCounter();
+        show(firstError === -1 ? 0 : firstError, 'next', firstError !== -1);
+    }
+
+    // Tras un envío correcto, el mensaje de éxito recibe el foco (lo anuncia).
+    const qsuccess = document.querySelector('[data-qform-success]');
+    if (qsuccess) qsuccess.focus({ preventScroll: true });
+
+    /* ---------------------------------------------------------------------
        Slider accesible con efectos de transición.
        Sin JS: carrusel deslizable con scroll-snap.
        Con JS (.is-enhanced): diapositivas apiladas que cambian con el efecto
@@ -520,9 +751,12 @@
         track.addEventListener('pointerdown', (e) => {
             startX = e.clientX;
             startY = e.clientY;
-            // Mano cerrada mientras se arrastra con el ratón.
-            if (e.pointerType === 'mouse' && !e.target.closest('a, button')) {
-                track.classList.add('is-dragging');
+            if (!e.target.closest('a, button')) {
+                // Captura: el pointerup llega aunque se suelte fuera del slider.
+                // (No se hace sobre enlaces/botones: impediría su clic.)
+                try { track.setPointerCapture(e.pointerId); } catch (err) { /* sin soporte */ }
+                // Mano cerrada mientras se arrastra con el ratón.
+                if (e.pointerType === 'mouse') track.classList.add('is-dragging');
             }
         });
         const stopDrag = () => track.classList.remove('is-dragging');

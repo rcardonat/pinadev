@@ -30,6 +30,7 @@ final class ErrorController extends Controller
             'code'    => $code,
             'message' => self::MESSAGES[$code] ?? 'Ocurrió un error inesperado. Inténtalo más tarde.',
             'trace'   => '',
+            'hero'    => false,     // la página de error tiene su propio diseño
         ];
 
         // Solo en desarrollo se muestra el detalle del error.

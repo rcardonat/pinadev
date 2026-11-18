@@ -24,7 +24,7 @@
     <meta name="description" content="<?= $description ?>">
     <?php endif ?>
     <link rel="stylesheet" href="<?= $base ?>/assets/css/pico.min.css?v=2.0.6">
-    <link rel="stylesheet" href="<?= $base ?>/assets/css/app.css?v=15">
+    <link rel="stylesheet" href="<?= $base ?>/assets/css/app.css?v=24">
     <?php foreach ($styles as $href): ?>
     <link rel="stylesheet" href="<?= $base ?>/assets/<?= $href ?>">
     <?php endforeach ?>
@@ -34,8 +34,13 @@
 
     <?= $this->render('partials/header.php', null, get_defined_vars()) ?>
 
-    <main id="contenido" class="container" tabindex="-1">
-        <?= $this->render($view, null, get_defined_vars()) ?>
+    <main id="contenido" tabindex="-1">
+        <?php if ($hero): ?>
+        <?= $this->render('partials/hero.php', null, get_defined_vars()) ?>
+        <?php endif ?>
+        <div class="container page-body">
+            <?= $this->render($view, null, get_defined_vars()) ?>
+        </div>
     </main>
 
     <?= $this->render('partials/footer.php', null, get_defined_vars()) ?>
@@ -49,7 +54,7 @@
         <?= icon('transfer-top') ?>
     </button>
 
-    <script src="<?= $base ?>/assets/js/app.js?v=11" defer></script>
+    <script src="<?= $base ?>/assets/js/app.js?v=17" defer></script>
     <?php foreach ($scripts as $src): ?>
     <script src="<?= $base ?>/assets/<?= $src ?>" defer></script>
     <?php endforeach ?>
