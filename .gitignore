@@ -1,0 +1,26 @@
+# Dependencias (se reinstalan con: composer install)
+/vendor/
+
+# IDE
+/.idea/
+.vscode/
+
+# Secretos y configuración local
+.env
+/config/config.php
+
+# Logs, caché y temporales
+/tmp/
+/logs/
+*.log
+*.cache
+
+# Respaldos y volcados
+*.sql.gz
+*.bak
+/backups/
+/dist/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
